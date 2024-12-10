@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solana Wallet Connector</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 50px;
+    }
+    .wallet-popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: white;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      padding: 20px;
+      border-radius: 10px;
+      z-index: 1000;
+    }
+    .wallet-popup .wallet-card {
+      display: inline-block;
+      margin: 10px;
+      cursor: pointer;
+      text-align: center;
+      width: 120px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 10px;
+      transition: transform 0.2s;
+    }
+    .wallet-popup .wallet-card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    .wallet-popup img {
+      width: 60px;
+      height: 60px;
+      margin-bottom: 10px;
+    }
+    .overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 999;
+    }
+    #detect-wallets {
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      background-color: #6200ea;
+      color: white;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    #detect-wallets:hover {
+      background-color: #3700b3;
+    }
+    .disabled {
+      cursor: not-allowed;
+      background-color: #ccc;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <h1>Connect Your Solana Wallet</h1>
+  <button id="detect-wallets">Detect Wallets</button>
+
+  <div class="overlay" id="overlay"></div>
+
+  <div class="wallet-popup" id="wallet-popup"></div>
+
+  <script>
+    async function detectWallets() {
+      const walletPopup = document.getElementById("wallet-popup");
+
+      const overlay = document.getElementById("overlay");
+
+      const detectButton = document.getElementById("detect-wallets");
+
+      // Clear existing wallets
+      walletPopup.innerHTML = "";
+
+      // Detect wallets manually
+      const wallets = [];
+      
+      // Wallets with name and logo
+      const walletDetails = {
+        Phantom: { logo: "Phantom-Wallet.png" },
+
+        Solflare: { logo: "solfare.png" },
+
+        SafePal: { logo: "glow.png" },
+
+        Glow: { logo: "safepal.png" },
+
+        MagicEden: { logo: "magic.png" },
+      };
+
+      // Phantom Wallet
+      if (window.solana?.isPhantom) 
+      {
+        wallets.push({ name: "Phantom", connect: () => window.solana.connect() });
+      }
+
+      // Solflare Wallet
+      if (window.solflare?.isSolflare)
+       {
+        wallets.push({ name: "Solflare", connect: () => window.solflare.connect() });
+      }
+
+      // Glow Wallet
+      if (window.glowSolana?.isGlow)
+
+       {
+        wallets.push({ name: "Glow", connect: () => window.glowSolana.connect() });
+      }
+   
+      // Magic Eden Wallet - Adjusted for more reliable detection
+      if (window.magicEden?.solana?.isMagicEden) {
+
+        wallets.push({
+
+          name: "MagicEden",
+
+          connect: () => {
+
+            return window.magicEden.solana.connect()
+
+              .then(() => {
+
+                alert("Connected to Magic Eden!");
+
+              })
+
+              .catch((error) => {
+
+                console.error("Failed to connect to Magic Eden:", error);
+
+                alert("Failed to connect to Magic Eden. Check the console for details.");
+              });
+          }
+        });
+      }
+
+      if (wallets.length === 0) {
+
+        alert("No wallets detected!");
+
+        return;
+      }
+
+      // Create wallet cards
+      const allWallets = ["Phantom", "Solflare", "Glow", "SafePal", "MagicEden"];
+
+      allWallets.forEach((walletName) => {
+
+        const walletCard = document.createElement("div");
+
+        walletCard.className = "wallet-card";
+
+        const wallet = wallets.find(w => w.name === walletName);
+
+        walletCard.innerHTML = `
+        
+          <img src="${walletDetails[walletName]?.logo || 'https://via.placeholder.com/60'}" alt="${walletName} Logo">
+
+          <p>${walletName}</p>
+        `;
+        
+        if (!wallet) {
+
+          walletCard.classList.add("disabled");
+
+          walletCard.onclick = () => alert(`${walletName} is not available.`);
+        } else {
+          walletCard.onclick = async () => {
+            try {
+              await wallet.connect();
+
+            } catch (error) {
+
+              console.error("Failed to connect to wallet:", error);
+
+              alert("Connection failed. Check the console for details.");
+
+            } finally {
+
+              overlay.style.display = "none";
+
+              walletPopup.style.display = "none";
+            }
+          };
+        }
+
+        walletPopup.appendChild(walletCard);
+      });
+
+      // Show the popup and overlay
+      overlay.style.display = "block";
+
+      walletPopup.style.display = "block";
+    }
+
+    document.getElementById("detect-wallets").addEventListener("click", detectWallets);
+  </script>
+</body>
+</html>
